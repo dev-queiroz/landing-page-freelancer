@@ -1,0 +1,31 @@
+{
+  "name": "landing-page-freelancer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "ts-node src/index.js",
+    "dev": "ts-node src/index.js",
+    "build": "tsc"
+  },
+  "keywords": [
+    "landing-page",
+    "freelancer",
+    "nodejs",
+    "express",
+    "typescript",
+    "nodemailer",
+    "cron"
+  ],
+  "author": "Douglas Vinícios dos Santos Queiroz",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
+    "axios": "^1.10.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "node-cron": "^4.1.1",
+    "nodemailer": "^7.0.3"
+  }
+}
