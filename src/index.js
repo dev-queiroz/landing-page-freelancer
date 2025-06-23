@@ -1,45 +1,43 @@
-require('dotenv').config();
 const express = require('express');
-const cron = require('node-cron');
 const pedidosRoutes = require('./routes/pedidos');
-const {listarPedidosConcluidos, excluirPedido} = require('./services/supabaseService');
-const {enviarRelatorioMensal} = require('./services/emailService');
+const cron = require('node-cron');
+const {listarPedidos, excluirPedido} = require('./services/supabaseService');
+const nodemailer = require('nodemailer');
 
 const app = express();
-app.use(express.json({type: 'application/json; charset=utf-8'}));
-app.use(express.urlencoded({extended: true}));
-app.use((req, res, next) => {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    next();
-});
+app.use(express.json());
 app.use('/pedidos', pedidosRoutes);
 
-// Cron: 1º dia do mês às 00:00
+// Configurar Nodemailer
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
+
+// Cron: 1º dia do mês, 00:00
 cron.schedule('0 0 1 * *', async () => {
     try {
-        console.log('Gerando relatório mensal...');
-        const pedidos = await listarPedidosConcluidos();
-        await enviarRelatorioMensal(pedidos);
-        for (const pedido of pedidos) {
-            await excluirPedido(pedido.id);
+        const pedidos = await listarPedidos();
+        const concluidos = pedidos.filter(p => p.status === 'CONCLUIDA');
+        if (concluidos.length > 0) {
+            const mailOptions = {
+                from: process.env.EMAIL_USER,
+                to: process.env.EMAIL_USER,
+                subject: 'Relatório Mensal de Pedidos Concluídos',
+                text: `Total de pedidos concluídos: ${concluidos.length}\n${concluidos.map(p => `ID: ${p.id}, Preço: R$${p.preco}`).join('\n')}`,
+            };
+            await transporter.sendMail(mailOptions);
+            for (const pedido of concluidos) {
+                await excluirPedido(pedido.id);
+            }
         }
-        console.log('Relatório enviado e pedidos concluídos excluídos.');
     } catch (error) {
-        console.error('Erro no cron:', error.message);
+        console.error('Erro no cron:', error);
     }
 });
 
 const PORT = process.env.PORT || 3000;
-try {
-    app.listen(PORT, () => {
-        console.log(`Servidor rodando na porta ${PORT}`);
-    });
-} catch (error) {
-    console.error('Erro ao iniciar o servidor:', error.message);
-    process.exit(1);
-}
-
-process.on('uncaughtException', (error) => {
-    console.error('Erro não capturado:', error.message);
-    process.exit(1);
-});
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
