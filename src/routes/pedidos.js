@@ -6,6 +6,7 @@ const {
     atualizarPedido,
     excluirPedido,
 } = require('../services/supabaseService');
+require('dotenv').config();
 
 const router = express.Router();
 

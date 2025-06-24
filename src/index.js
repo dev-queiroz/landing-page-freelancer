@@ -1,10 +1,20 @@
 const express = require('express');
+const cors = require('cors');
 const pedidosRoutes = require('./routes/pedidos');
 const cron = require('node-cron');
 const {listarPedidos, excluirPedido} = require('./services/supabaseService');
 const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 const app = express();
+
+// Configurar CORS
+app.use(cors({
+    origin: ['http://localhost:3000', 'https://landing-page-form-next.vercel.app'], // Adicione a URL do seu frontend
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 app.use('/pedidos', pedidosRoutes);
 
